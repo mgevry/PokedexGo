@@ -1,12 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"os"
+	"time"
+
+	"github.com/mgevry/pokedex/pokeapi"
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	pokeClient := pokeapi.NewClient(5 * time.Second)
+	cfg := &config{
+		pokeapiClient: pokeClient,
+	}
 
-	runREPL(scanner)
+	runREPL(cfg)
 }
