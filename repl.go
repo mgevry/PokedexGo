@@ -12,6 +12,7 @@ type config struct {
 	pokeapiClient pokeapi.Client
 	nextLocationsURL *string
 	prevLocationsURL *string
+	caughtPokemon map[string]pokeapi.PokemonInfo
 }
 
 //takes commands, removes whitespaces before and after command, lowercases all words, puts words of command into slice
@@ -40,8 +41,17 @@ func runREPL(cfg *config) {
 		scanText := scanner.Text()
 		//cleans the input
 		cleanText := cleanInput(scanText)
-		//takes the first word of the input
+
+		//makes it so that no input will also call exit command instead of panicking
+		if len(cleanText) < 1 {
+			placeholder := []string{"hello", "world"}
+			commandExit(cfg, placeholder)
+		}
+
+		//takes the first word of the input for the command and gras the rest of the words in the command for additional parameters
 		firstWord := cleanText[0]
+		args := cleanText[1:]
+		
 		//processes the first word of the input to see if there is a matching command, if there is, store the command name
 		command, ok := getCommands()[firstWord]
 		if !ok {
@@ -49,7 +59,7 @@ func runREPL(cfg *config) {
 			continue
 		}
 		//calls the corresponding command
-		err := command.callback(cfg)
+		err := command.callback(cfg, args)
 		if err != nil {
 			fmt.Println("Error processing command:", err)
 			continue
@@ -62,7 +72,7 @@ func runREPL(cfg *config) {
 type cliCommand struct {
 	name string
 	description string
-	callback func(*config) error
+	callback func(*config, []string) error
 }
 //registry of commands for pokedexcli
 func getCommands() map[string]cliCommand{
@@ -89,6 +99,30 @@ func getCommands() map[string]cliCommand{
 			name: "mapb",
 			description: "Get the previous page of locations",
 			callback: commandMapb,
+		},
+
+		"explore": {
+			name: "explore",
+			description: "Gets a list of all pokemon in the location",
+			callback: commandExplore,
+		},
+
+		"catch": {
+			name: "catch",
+			description: "Catches a pokemon and adds it to the pokedex",
+			callback: commandCatch,
+		},
+
+		"inspect": {
+			name: "inspect",
+			description: "Displays the stats of a caught pokemon",
+			callback: commandInspect,
+		},
+
+		"pokedex": {
+			name: "pokedex",
+			description: "Displays a list of all caught pokemon",
+			callback: commandPokedex,
 		},
 	}
 }
